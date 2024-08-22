@@ -3,111 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>Chat Application</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #chat { margin-top: 20px; }
-        .message { margin-bottom: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .messages {
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            text-align: left;
+            margin-top: 20px;
+        }
+        .chat-list {
+            margin-top: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
-    <h1>Chat App</h1>
-    
-    <section>
-        <h2>Start a New Chat</h2>
-        <form id="startChatForm">
-            <label for="username1">Username 1:</label>
-            <input type="text" id="username1" required>
-            <br>
-            <label for="username2">Username 2:</label>
-            <input type="text" id="username2" required>
-            <br>
-            <button type="submit">Start Chat</button>
-        </form>
-    </section>
+    <div class="container">
+        <h1>Chat Application</h1>
 
-    <section>
-        <h2>Send a Message</h2>
-        <form id="sendMessageForm">
-            <label for="chatId">Chat ID:</label>
-            <input type="text" id="chatId" required>
-            <br>
-            <label for="sender">Username:</label>
-            <input type="text" id="sender" required>
-            <br>
-            <label for="message">Message:</label>
-            <textarea id="message" rows="4" required></textarea>
-            <br>
-            <button type="submit">Send Message</button>
-        </form>
-    </section>
-
-    <section>
-        <h2>Get Messages</h2>
-        <form id="getMessagesForm">
-            <label for="getChatId">Chat ID:</label>
-            <input type="text" id="getChatId" required>
-            <br>
-            <button type="submit">Get Messages</button>
-        </form>
-        <div id="chat">
-            <!-- Messages will be displayed here -->
+        <div id="loginSection">
+            <h2>Login</h2>
+            <input type="text" id="loginUsernameInput" placeholder="Enter your username">
+            <input type="password" id="loginPasswordInput" placeholder="Enter your password">
+            <button onclick="login()">Login</button>
+            <h2>Register</h2>
+            <input type="text" id="registerUsernameInput" placeholder="Enter your username">
+            <input type="password" id="registerPasswordInput" placeholder="Enter your password">
+            <button onclick="register()">Register</button>
         </div>
-    </section>
+
+        <div id="chatSection" style="display: none;">
+            <h2>Start a New Chat</h2>
+            <input type="text" id="recipientInput" placeholder="Enter recipient username">
+            <button onclick="startChat()">Start Chat</button>
+
+            <h2>Send Message</h2>
+            <input type="text" id="chatIdInput" placeholder="Enter chat ID">
+            <textarea id="messageInput" placeholder="Enter your message"></textarea>
+            <button onclick="sendMessage()">Send Message</button>
+
+            <div class="messages" id="messages"></div>
+
+            <h2>Your Chats</h2>
+            <div class="chat-list" id="chatList"></div>
+        </div>
+    </div>
 
     <script>
-        // Function to start a new chat
-        document.getElementById('startChatForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const username1 = document.getElementById('username1').value;
-            const username2 = document.getElementById('username2').value;
+        let username = '';
 
+        async function register() {
+            const regUsername = document.getElementById('registerUsernameInput').value;
+            const regPassword = document.getElementById('registerPasswordInput').value;
+
+            if (!regUsername || !regPassword) {
+                alert('Both username and password are required');
+                return;
+            }
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: regUsername, password: regPassword })
+            });
+
+            if (response.ok) {
+                alert('Registration successful');
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Registration failed');
+            }
+        }
+
+        async function login() {
+            username = document.getElementById('loginUsernameInput').value;
+            const password = document.getElementById('loginPasswordInput').value;
+
+            if (!username || !password) {
+                alert('Both username and password are required');
+                return;
+            }
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.ok) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('chatSection').style.display = 'block';
+                loadChats();
+            } else {
+                alert('Login failed');
+            }
+        }
+
+        async function loadChats() {
+            const response = await fetch('/getChats');
+            if (response.ok) {
+                const data = await response.json();
+                const chatListDiv = document.getElementById('chatList');
+                chatListDiv.innerHTML = '';
+
+                data.chats.forEach(chat => {
+                    const chatElement = document.createElement('div');
+                    chatElement.textContent = `Chat ID: ${chat.chatId}`;
+                    chatElement.style.cursor = 'pointer';
+                    chatElement.onclick = () => loadMessages(chat.chatId);
+                    chatListDiv.appendChild(chatElement);
+                });
+            } else {
+                alert('Failed to load chats');
+            }
+        }
+
+        async function startChat() {
+            const recipient = document.getElementById('recipientInput').value;
+            if (!recipient) {
+                alert('Recipient username is required');
+                return;
+            }
+            
             const response = await fetch('/startMessage', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username1, username2 })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username2: recipient })
             });
+            
             const data = await response.json();
-            alert('Chat started with ID: ' + data.chatId);
-        });
+            if (response.ok) {
+                document.getElementById('chatIdInput').value = data.chatId;
+                loadMessages(data.chatId);
+                loadChats(); // Refresh chat list
+            } else {
+                alert('Failed to start chat');
+            }
+        }
 
-        // Function to send a message
-        document.getElementById('sendMessageForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const chatId = document.getElementById('chatId').value;
-            const username = document.getElementById('sender').value;
-            const message = document.getElementById('message').value;
-
+        async function sendMessage() {
+            const chatId = document.getElementById('chatIdInput').value;
+            const message = document.getElementById('messageInput').value;
+            if (!chatId || !message) {
+                alert('Chat ID and message are required');
+                return;
+            }
+            
             const response = await fetch('/sendMessage', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatId, username, message })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ chatId, message })
             });
-            const data = await response.json();
-            if (data.success) {
-                alert('Message sent successfully');
+            
+            if (response.ok) {
+                document.getElementById('messageInput').value = '';
+                loadMessages(chatId);
             } else {
-                alert('Error sending message');
+                alert('Failed to send message');
             }
-        });
+        }
 
-        // Function to get messages
-        document.getElementById('getMessagesForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const chatId = document.getElementById('getChatId').value;
-
+        async function loadMessages(chatId) {
             const response = await fetch(`/getMessages?chatId=${chatId}`);
-            const data = await response.json();
-
-            const chatDiv = document.getElementById('chat');
-            chatDiv.innerHTML = '';
-            data.forEach(msg => {
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message');
-                messageDiv.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
-                chatDiv.appendChild(messageDiv);
-            });
-        });
+            if (response.ok) {
+                const messages = await response.json();
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = '';
+                messages.forEach(msg => {
+                    const messageElement = document.createElement('div');
+                    messageElement.textContent = `${msg.timestamp} ${msg.username}: ${msg.message}`;
+                    messagesDiv.appendChild(messageElement);
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else {
+                alert('Failed to load messages');
+            }
+        }
     </script>
 </body>
 </html>
