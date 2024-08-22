@@ -6,6 +6,8 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+app.use(express.static(path.join(__dirname, 'views')));
+
 app.use(bodyParser.json()); // Parse JSON request bodies
 
 // Helper function to get the file path for a chat
@@ -71,6 +73,12 @@ app.post('/sendMessage', async (req, res) => {
 
   res.json({ success: true });
 });
+
+// Serve index.html at the root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+  });
+  
 
 app.listen(port, () => {
   console.log(`Chat app listening at http://localhost:${port}`);

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat { margin-top: 20px; }
+        .message { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Chat App</h1>
+    
+    <section>
+        <h2>Start a New Chat</h2>
+        <form id="startChatForm">
+            <label for="username1">Username 1:</label>
+            <input type="text" id="username1" required>
+            <br>
+            <label for="username2">Username 2:</label>
+            <input type="text" id="username2" required>
+            <br>
+            <button type="submit">Start Chat</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Send a Message</h2>
+        <form id="sendMessageForm">
+            <label for="chatId">Chat ID:</label>
+            <input type="text" id="chatId" required>
+            <br>
+            <label for="sender">Username:</label>
+            <input type="text" id="sender" required>
+            <br>
+            <label for="message">Message:</label>
+            <textarea id="message" rows="4" required></textarea>
+            <br>
+            <button type="submit">Send Message</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Get Messages</h2>
+        <form id="getMessagesForm">
+            <label for="getChatId">Chat ID:</label>
+            <input type="text" id="getChatId" required>
+            <br>
+            <button type="submit">Get Messages</button>
+        </form>
+        <div id="chat">
+            <!-- Messages will be displayed here -->
+        </div>
+    </section>
+
+    <script>
+        // Function to start a new chat
+        document.getElementById('startChatForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const username1 = document.getElementById('username1').value;
+            const username2 = document.getElementById('username2').value;
+
+            const response = await fetch('/startMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username1, username2 })
+            });
+            const data = await response.json();
+            alert('Chat started with ID: ' + data.chatId);
+        });
+
+        // Function to send a message
+        document.getElementById('sendMessageForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const chatId = document.getElementById('chatId').value;
+            const username = document.getElementById('sender').value;
+            const message = document.getElementById('message').value;
+
+            const response = await fetch('/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId, username, message })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Message sent successfully');
+            } else {
+                alert('Error sending message');
+            }
+        });
+
+        // Function to get messages
+        document.getElementById('getMessagesForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const chatId = document.getElementById('getChatId').value;
+
+            const response = await fetch(`/getMessages?chatId=${chatId}`);
+            const data = await response.json();
+
+            const chatDiv = document.getElementById('chat');
+            chatDiv.innerHTML = '';
+            data.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
+                chatDiv.appendChild(messageDiv);
+            });
+        });
+    </script>
+</body>
+</html>
