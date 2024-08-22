@@ -4,218 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Application</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        .container {
-            width: 90%;
-            max-width: 800px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px;
-            font-size: 16px;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 16px;
-        }
-        .messages {
-            border: 1px solid #ddd;
-            padding: 10px;
-            height: 300px;
-            overflow-y: scroll;
-            text-align: left;
-            margin-top: 20px;
-        }
-        .chat-list {
-            margin-top: 20px;
-            text-align: left;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Chat Application</h1>
-
-        <div id="loginSection">
-            <h2>Login</h2>
-            <input type="text" id="loginUsernameInput" placeholder="Enter your username">
-            <input type="password" id="loginPasswordInput" placeholder="Enter your password">
-            <button onclick="login()">Login</button>
-            <h2>Register</h2>
-            <input type="text" id="registerUsernameInput" placeholder="Enter your username">
-            <input type="password" id="registerPasswordInput" placeholder="Enter your password">
-            <button onclick="register()">Register</button>
+    <div class="app">
+        <div id="loginSection" class="auth-section">
+            <h1>Chat Application</h1>
+            <div class="auth-form">
+                <div class="auth-input">
+                    <input type="text" id="loginUsernameInput" placeholder="Username">
+                </div>
+                <div class="auth-input">
+                    <input type="password" id="loginPasswordInput" placeholder="Password">
+                </div>
+                <button onclick="login()">Login</button>
+                <div class="auth-separator">or</div>
+                <div class="auth-input">
+                    <input type="text" id="registerUsernameInput" placeholder="Username">
+                </div>
+                <div class="auth-input">
+                    <input type="password" id="registerPasswordInput" placeholder="Password">
+                </div>
+                <button onclick="register()">Register</button>
+            </div>
         </div>
 
-        <div id="chatSection" style="display: none;">
-            <h2>Start a New Chat</h2>
-            <input type="text" id="recipientInput" placeholder="Enter recipient username">
-            <button onclick="startChat()">Start Chat</button>
-
-            <h2>Send Message</h2>
-            <input type="text" id="chatIdInput" placeholder="Enter chat ID">
-            <textarea id="messageInput" placeholder="Enter your message"></textarea>
-            <button onclick="sendMessage()">Send Message</button>
-
-            <div class="messages" id="messages"></div>
-
-            <h2>Your Chats</h2>
-            <div class="chat-list" id="chatList"></div>
+        <div id="chatSection" class="chat-section" style="display: none;">
+            <div class="chat-container">
+                <div class="chat-list">
+                    <h2>Chats</h2>
+                    <input type="text" id="recipientInput" placeholder="Search or start a new chat">
+                    <button onclick="startChat()">Start Chat</button>
+                    <div id="chatList" class="chat-list-items"></div>
+                </div>
+                <div class="chat-area">
+                    <div id="messages" class="messages"></div>
+                    <div class="message-input">
+                        <input type="text" id="chatIdInput" placeholder="Chat ID" readonly>
+                        <textarea id="messageInput" placeholder="Type a message"></textarea>
+                        <button onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        let username = '';
-
-        async function register() {
-            const regUsername = document.getElementById('registerUsernameInput').value;
-            const regPassword = document.getElementById('registerPasswordInput').value;
-
-            if (!regUsername || !regPassword) {
-                alert('Both username and password are required');
-                return;
-            }
-
-            const response = await fetch('/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username: regUsername, password: regPassword })
-            });
-
-            if (response.ok) {
-                alert('Registration successful');
-            } else {
-                const data = await response.json();
-                alert(data.error || 'Registration failed');
-            }
-        }
-
-        async function login() {
-            username = document.getElementById('loginUsernameInput').value;
-            const password = document.getElementById('loginPasswordInput').value;
-
-            if (!username || !password) {
-                alert('Both username and password are required');
-                return;
-            }
-
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.ok) {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('chatSection').style.display = 'block';
-                loadChats();
-            } else {
-                alert('Login failed');
-            }
-        }
-
-        async function loadChats() {
-            const response = await fetch('/getChats');
-            if (response.ok) {
-                const data = await response.json();
-                const chatListDiv = document.getElementById('chatList');
-                chatListDiv.innerHTML = '';
-
-                data.chats.forEach(chat => {
-                    const chatElement = document.createElement('div');
-                    chatElement.textContent = `Chat ID: ${chat.chatId}`;
-                    chatElement.style.cursor = 'pointer';
-                    chatElement.onclick = () => loadMessages(chat.chatId);
-                    chatListDiv.appendChild(chatElement);
-                });
-            } else {
-                alert('Failed to load chats');
-            }
-        }
-
-        async function startChat() {
-            const recipient = document.getElementById('recipientInput').value;
-            if (!recipient) {
-                alert('Recipient username is required');
-                return;
-            }
-            
-            const response = await fetch('/startMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username2: recipient })
-            });
-            
-            const data = await response.json();
-            if (response.ok) {
-                document.getElementById('chatIdInput').value = data.chatId;
-                loadMessages(data.chatId);
-                loadChats(); // Refresh chat list
-            } else {
-                alert('Failed to start chat');
-            }
-        }
-
-        async function sendMessage() {
-            const chatId = document.getElementById('chatIdInput').value;
-            const message = document.getElementById('messageInput').value;
-            if (!chatId || !message) {
-                alert('Chat ID and message are required');
-                return;
-            }
-            
-            const response = await fetch('/sendMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ chatId, message })
-            });
-            
-            if (response.ok) {
-                document.getElementById('messageInput').value = '';
-                loadMessages(chatId);
-            } else {
-                alert('Failed to send message');
-            }
-        }
-
-        async function loadMessages(chatId) {
-            const response = await fetch(`/getMessages?chatId=${chatId}`);
-            if (response.ok) {
-                const messages = await response.json();
-                const messagesDiv = document.getElementById('messages');
-                messagesDiv.innerHTML = '';
-                messages.forEach(msg => {
-                    const messageElement = document.createElement('div');
-                    messageElement.textContent = `${msg.timestamp} ${msg.username}: ${msg.message}`;
-                    messagesDiv.appendChild(messageElement);
-                });
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            } else {
-                alert('Failed to load messages');
-            }
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>

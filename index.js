@@ -9,6 +9,7 @@ const { check, validationResult } = require('express-validator');
 const app = express();
 const port = 3000;
 const saltRounds = 10;
+app.use(express.static(path.join(__dirname, 'views')));
 
 // Middleware setup
 app.use(express.static(path.join(__dirname, 'views')));
