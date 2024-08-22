@@ -1,4 +1,6 @@
 let username = '';
+let pollingInterval = 10000; // 10 seconds in milliseconds
+let pollingTimer = null;
 
 async function register() {
     const regUsername = document.getElementById('registerUsernameInput').value;
@@ -94,8 +96,11 @@ async function startChat() {
     }
 }
 
+let ChatID = ''; // Declare a global variable
+
 async function sendMessage() {
-    const chatId = document.getElementById('chatIdInput').value;
+    //const chatId = document.getElementById('chatIdInput').value;
+    const chatId = ChatID;
     const message = document.getElementById('messageInput').value;
     if (!chatId || !message) {
         alert('Chat ID and message are required');
@@ -124,7 +129,8 @@ async function loadMessages(chatId) {
         const messages = await response.json();
         const messagesDiv = document.getElementById('messages');
         messagesDiv.innerHTML = '';
-
+        ChatID = chatId;
+        
         messages.forEach(msg => {
             const messageElement = document.createElement('div');
             messageElement.className = `message ${msg.username === username ? 'user' : 'other'}`;
@@ -138,7 +144,30 @@ async function loadMessages(chatId) {
         });
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        startPolling();
     } else {
         alert('Failed to load messages');
+    }
+}
+function startPolling() {
+    // Clear any existing polling timer
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+    }
+
+    // Set up a new polling interval
+    pollingTimer = setInterval(async () => {
+        if (ChatID) {
+            await loadMessages(ChatID);
+        }
+    }, pollingInterval);
+}
+
+// Stop polling when the chat is closed or a new chat is selected
+function stopPolling() {
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
     }
 }
