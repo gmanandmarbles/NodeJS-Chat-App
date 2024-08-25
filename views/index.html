@@ -38,18 +38,30 @@
                     <div id="chatList" class="chat-list-items"></div>
                 </div>
                 <div class="chat-area">
+                    <div id="recipientName" class="recipient-name"><span id="recipientNameText"></span></div>
                     <div id="messages" class="messages"></div>
                     <div class="message-input">
-                        <input type="text" id="chatIdInput" placeholder="Chat ID">
                         <textarea id="messageInput" placeholder="Type a message"></textarea>
                         <button onclick="sendMessage()">Send</button>
                     </div>
                 </div>
+                
+            </div>
+        </div>
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Alert</h2>
+                <p id="modalText">Modal text goes here dynamically.</p>
+                <button onclick="closeModal()">Close</button>
             </div>
         </div>
         
     </div>
     
+    <!-- Modal goes above App.js, for dependency reasons.-->
+    <script src="modal.js"></script>
     <script src="app.js"></script>
+   
 </body>
 </html>

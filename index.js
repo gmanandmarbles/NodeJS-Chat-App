@@ -5,6 +5,7 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const { check, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit'); // Import express-rate-limit
 
 const app = express();
 const port = 3000;
@@ -12,7 +13,6 @@ const saltRounds = 10;
 app.use(express.static(path.join(__dirname, 'views')));
 
 // Middleware setup
-app.use(express.static(path.join(__dirname, 'views')));
 app.use(bodyParser.json());
 app.use(session({
   secret: 'your-secret-key', // Replace with a real secret key
@@ -22,11 +22,37 @@ app.use(session({
 
 const userFilePath = path.join(__dirname, 'users.json');
 
+// IP whitelist
+const ipWhitelist = ['127.0.0.1','::1']; // Add IPs to whitelist as needed
+
+// Middleware to check if the request IP is whitelisted
+const ipWhitelistMiddleware = (req, res, next) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  if (ipWhitelist.includes(clientIp)) {
+    return next();
+  }
+  res.status(403).json({ error: 'Access forbidden from this IP' });
+};
+
 // Helper function to get the file path for a chat
 const getChatFilePath = (username1, username2) => {
   const sortedUsernames = [username1, username2].sort();
   return path.join(__dirname, 'chats', `${sortedUsernames[0]}_${sortedUsernames[1]}.json`);
 };
+
+// Rate limiter for login attempts
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: 'Too many login attempts from this IP, please try again later.',
+});
+
+// Rate limiter for sending messages
+const messageRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // Limit each user to 10 messages per windowMs
+  message: 'Too many messages sent from this user, please try again later.',
+});
 
 // Register a new user
 app.post('/register', [
@@ -52,8 +78,8 @@ app.post('/register', [
   res.json({ success: true });
 });
 
-// Login a user
-app.post('/login', [
+// Login a user with rate limiting
+app.post('/login', loginRateLimiter, [
   check('username').not().isEmpty().withMessage('Username is required'),
   check('password').not().isEmpty().withMessage('Password is required')
 ], async (req, res) => {
@@ -140,8 +166,8 @@ app.get('/getMessages', isAuthenticated, [
   res.json(messages);
 });
 
-// Endpoint to send a message
-app.post('/sendMessage', isAuthenticated, [
+// Endpoint to send a message with rate limiting
+app.post('/sendMessage', isAuthenticated, messageRateLimiter, [
   check('chatId').not().isEmpty().withMessage('Chat ID is required'),
   check('message').not().isEmpty().withMessage('Message is required')
 ], async (req, res) => {
@@ -166,8 +192,47 @@ app.post('/sendMessage', isAuthenticated, [
   }
 
   const messages = await fs.readJson(chatFilePath);
-  messages.push({ username, message, timestamp: new Date().toISOString() });
+  messages.push({ username, message, timestamp: new Date().toISOString(), readBy: [] });
   await fs.writeJson(chatFilePath, messages);
+
+  res.json({ success: true });
+});
+
+// Endpoint to mark messages as read
+app.post('/markAsRead', isAuthenticated, [
+  check('chatId').not().isEmpty().withMessage('Chat ID is required'),
+  check('messageId').isInt().withMessage('Message ID is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { chatId, messageId } = req.body;
+  const username = req.session.username;
+
+  const chatFilePath = path.join(__dirname, 'chats', `${chatId}.json`);
+
+  if (!await fs.pathExists(chatFilePath)) {
+    return res.status(404).json({ error: 'Chat not found' });
+  }
+
+  // Check if the user has access to the chat
+  const users = await fs.readJson(userFilePath);
+  if (!users[username].chats.includes(chatFilePath)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const messages = await fs.readJson(chatFilePath);
+  if (messageId >= messages.length) {
+    return res.status(400).json({ error: 'Invalid message ID' });
+  }
+
+  const message = messages[messageId];
+  if (!message.readBy.includes(username)) {
+    message.readBy.push(username);
+    await fs.writeJson(chatFilePath, messages);
+  }
 
   res.json({ success: true });
 });
@@ -188,9 +253,12 @@ app.get('/getChats', isAuthenticated, async (req, res) => {
 });
 
 // Serve index.html at the root URL
-app.get('/', (req, res) => {
+app.get('/', ipWhitelistMiddleware, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
+
+// Apply the whitelist middleware globally if needed
+app.use(ipWhitelistMiddleware);
 
 app.listen(port, () => {
   console.log(`Chat app listening at http://localhost:${port}`);
