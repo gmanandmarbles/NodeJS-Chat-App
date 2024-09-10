@@ -1,0 +1,15 @@
+[
+    {
+      "name": "John Doe",
+      "grade": "5th Grade",
+      "image": "https://www.fakepersongenerator.com/Face/male/male108582790424.jpg",
+      "username": "john.doe"
+    },
+    {
+      "name": "Jane Smith",
+      "grade": "6th Grade",
+      "image": "https://example.com/images/jane_smith.jpg",
+      "username": "jane.smith"
+    }
+  ]
+  

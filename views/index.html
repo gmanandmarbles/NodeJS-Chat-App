@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="app">
+        <!-- Login and Registration Section -->
         <div id="loginSection" class="auth-section">
             <h1>Chat Application</h1>
             <div class="auth-form">
@@ -29,15 +30,18 @@
             </div>
         </div>
 
+        <!-- Chat Section -->
         <div id="chatSection" class="chat-section" style="display: none;">
             <div class="chat-container">
                 <div class="chat-list">
                     <h2>Chats</h2>
                     <input type="text" id="recipientInput" placeholder="Search or start a new chat">
                     <button onclick="startChat()">Start Chat</button>
+                    <button onclick="showTeachers()">View Teachers</button>
                     <div id="chatList" class="chat-list-items"></div>
                 </div>
                 <div class="chat-area">
+                    <button id="toggleChatList" class="chat-list-button" style="display: none;">Toggle Chat List</button>
                     <div id="recipientName" class="recipient-name"><span id="recipientNameText"></span></div>
                     <div id="messages" class="messages"></div>
                     <div class="message-input">
@@ -45,23 +49,29 @@
                         <button onclick="sendMessage()">Send</button>
                     </div>
                 </div>
-                
             </div>
         </div>
+
+        <!-- Teacher Section -->
+        <div id="teacherSection" class="teacher-section" style="display: none;">
+            <h1>Teachers</h1>
+            <div id="teacherList" class="teacher-list"></div>
+            <button onclick="showChatSection()">Back to Chat</button>
+        </div>
+
+        <!-- Modal -->
         <div id="myModal" class="modal">
             <div class="modal-content">
-                <span class="close">&times;</span>
+                <span class="close" onclick="closeModal()">&times;</span>
                 <h2>Alert</h2>
                 <p id="modalText">Modal text goes here dynamically.</p>
                 <button onclick="closeModal()">Close</button>
             </div>
         </div>
-        
     </div>
-    
-    <!-- Modal goes above App.js, for dependency reasons.-->
+
+    <!-- Modal goes above app.js, for dependency reasons. -->
     <script src="modal.js"></script>
     <script src="app.js"></script>
-   
 </body>
 </html>

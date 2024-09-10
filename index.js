@@ -21,6 +21,8 @@ app.use(session({
 }));
 
 const userFilePath = path.join(__dirname, 'users.json');
+const teachersFilePath = path.join(__dirname, 'teachers.json');
+
 
 // IP whitelist
 const ipWhitelist = ['127.0.0.1','::1']; // Add IPs to whitelist as needed
@@ -250,6 +252,15 @@ app.get('/getChats', isAuthenticated, async (req, res) => {
   }
 
   res.json({ chats });
+});
+
+app.get('/getTeachers', async (req, res) => {
+  try {
+    const teachers = await fs.readJson(teachersFilePath);
+    res.json(teachers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load teacher data' });
+  }
 });
 
 // Serve index.html at the root URL

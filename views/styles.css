@@ -63,6 +63,7 @@ button:hover {
     display: flex;
     flex: 1;
     height: calc(100vh - 40px); /* Adjust based on auth-section height */
+    flex-direction: row;
 }
 
 .chat-container {
@@ -176,12 +177,14 @@ button:hover {
 .message-input button {
     align-self: flex-end;
 }
+
 .recipient-name {
     padding: 10px;
     border-bottom: 1px solid #ddd;
     background-color: #f9f9f9;
     font-weight: bold;
 }
+
 /* Modal Styles */
 .modal {
     display: none; /* Hidden by default */
@@ -236,5 +239,91 @@ button:hover {
 }
 
 .modal button:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .chat-section {
+        flex-direction: column;
+    }
+
+    .chat-list {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        max-height: 200px; /* Height of the chat list panel */
+        overflow-y: auto;
+    }
+
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-list-button {
+        display: block;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 10px auto;
+    }
+
+    .chat-list-button:hover {
+        background-color: #0056b3;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+}
+/* Existing styles here... */
+
+.teacher-section {
+    padding: 20px;
+}
+
+.teacher-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.teacher {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    width: 250px;
+}
+
+.teacher-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+button:hover {
     background-color: #0056b3;
 }
