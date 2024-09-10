@@ -4,7 +4,7 @@ let pollingTimer = null;
 let ChatID = ''; // Declare a global variable
 
 async function register() {
-    const regUsername = document.getElementById('registerUsernameInput').value;
+    const regUsername = document.getElementById('registerUsernameInput').value.toLowerCase();
     const regPassword = document.getElementById('registerPasswordInput').value;
 
     if (!regUsername || !regPassword) {
@@ -33,7 +33,7 @@ async function register() {
 }
 
 async function login() {
-    username = document.getElementById('loginUsernameInput').value;
+    username = document.getElementById('loginUsernameInput').value.toLowerCase();
     const password = document.getElementById('loginPasswordInput').value;
 
     if (!username || !password) {
@@ -88,7 +88,7 @@ async function loadChats() {
 }
 
 async function startChat() {
-    const recipient = document.getElementById('recipientInput').value;
+    const recipient = document.getElementById('recipientInput').value.toLowerCase();
     if (!recipient) {
         openModal('Recipient username is required');
         return;
@@ -199,6 +199,7 @@ function stopPolling() {
         pollingTimer = null;
     }
 }
+
 // JavaScript to handle chat list toggle button
 document.addEventListener('DOMContentLoaded', () => {
     const toggleChatListButton = document.getElementById('toggleChatList');
@@ -224,8 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update layout on window resize
     window.addEventListener('resize', updateLayout);
 });
-
-// Assuming you have some existing code here...
 
 // Show the teacher list section
 function showTeachers() {
@@ -266,7 +265,7 @@ async function fetchTeachers() {
 
             const startChatButton = document.createElement('button');
             startChatButton.textContent = 'Start Conversation';
-            startChatButton.onclick = () => startChat(teacher.username);
+            startChatButton.onclick = () => startChat(teacher.username.toLowerCase());
 
             teacherDiv.appendChild(img);
             teacherDiv.appendChild(name);
@@ -303,5 +302,3 @@ async function startChat(username) {
         console.error('Failed to start chat:', error);
     }
 }
-
-// The rest of your existing
