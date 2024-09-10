@@ -73,8 +73,9 @@ async function loadChats() {
             chatListDiv.innerHTML = '';
 
             data.chats.forEach(chat => {
+                const recipient = getRecipientUsername(chat.chatId);
                 const chatElement = document.createElement('div');
-                chatElement.textContent = `Chat ID: ${chat.chatId}`;
+                chatElement.textContent = recipient;
                 chatElement.onclick = () => loadMessages(chat.chatId);
                 chatListDiv.appendChild(chatElement);
             });
@@ -86,6 +87,22 @@ async function loadChats() {
         openModal('An unexpected error occurred while loading chats');
     }
 }
+
+// Helper function to get the recipient's username from the chat ID
+function getRecipientUsername(chatId) {
+    // Extract the recipient from the chat ID based on the username and recipient format
+    const parts = chatId.split('_');
+    if (parts.length === 2) {
+        // Assuming the current user is 'username' and chat ID can be in two formats
+        if (parts[0] === username) {
+            return parts[1]; // If the chat ID is in "username_recipient" format
+        } else {
+            return parts[0]; // If the chat ID is in "recipient_username" format
+        }
+    }
+    return chatId; // Fallback if the chat ID format is unexpected
+}
+
 
 async function startChat() {
     const recipient = document.getElementById('recipientInput').value.toLowerCase();
@@ -106,8 +123,11 @@ async function startChat() {
         const data = await response.json();
         if (response.ok) {
             document.getElementById('chatIdInput').value = data.chatId;
-            loadMessages(data.chatId);
+            loadMessages(data.chatId); // Load messages for the new chat
             loadChats(); // Refresh chat list
+
+            // Set the recipient name in the chat area
+            document.getElementById('recipientNameText').textContent = recipient;
         } else {
             openModal(data.error || 'Failed to start chat');
         }
@@ -115,6 +135,7 @@ async function startChat() {
         openModal('An unexpected error occurred while starting chat');
     }
 }
+
 
 async function sendMessage() {
     const chatId = ChatID;
@@ -153,7 +174,11 @@ async function loadMessages(chatId) {
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = '';
             ChatID = chatId;
-            
+
+            // Update the recipient name
+            const recipient = getRecipientUsername(chatId);
+            document.getElementById('recipientNameText').textContent = recipient;
+
             messages.forEach(msg => {
                 const messageElement = document.createElement('div');
                 messageElement.className = `message ${msg.username === username ? 'user' : 'other'}`;
@@ -177,6 +202,7 @@ async function loadMessages(chatId) {
         openModal('An unexpected error occurred while loading messages');
     }
 }
+
 
 function startPolling() {
     // Clear any existing polling timer
@@ -280,25 +306,34 @@ async function fetchTeachers() {
 }
 
 // Start a chat with a teacher
-async function startChat(username) {
+async function startChat() {
+    const recipient = document.getElementById('recipientInput').value.toLowerCase();
+    if (!recipient) {
+        openModal('Recipient username is required');
+        return;
+    }
+
     try {
         const response = await fetch('/startMessage', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username2: username })
+            body: JSON.stringify({ username2: recipient })
         });
 
-        const result = await response.json();
-        if (result.chatId) {
-            openModal(`Chat started! Chat ID: ${result.chatId}`);
-            showChatSection();
-            loadChats();
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById('chatIdInput').value = data.chatId;
+            loadMessages(data.chatId); // Load messages for the new chat
+            loadChats(); // Refresh chat list
+
+            // Set the recipient name in the chat area
+            document.getElementById('recipientNameText').textContent = recipient;
         } else {
-            openModal('Failed to start chat.');
+            openModal(data.error || 'Failed to start chat');
         }
     } catch (error) {
-        console.error('Failed to start chat:', error);
+        openModal('An unexpected error occurred while starting chat');
     }
 }
